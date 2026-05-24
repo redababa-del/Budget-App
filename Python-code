@@ -1,0 +1,129 @@
+import math
+
+class Category:
+    #instantiate object 
+    def __init__(self,name):
+        self.name = name
+        self.ledger = []
+        self.budget = 0
+
+    #display it
+    def __str__(self):
+        display = ""
+        #add the first line
+        display += "*"*(int((30-len(self.name))/2))+self.name+"*"*(int((31-len(self.name))/2))+"\n"
+        #now add the descriptions
+        for operation in self.ledger:
+            #we need the number of spaces before
+            space = 30 - len(operation["description"][:23]) - len(f"{operation['amount']:.2f}")
+            display += f'{operation["description"][:23]}'+" "*space+f"{operation['amount']:.2f}"+"\n"
+        #add the last line
+        display += f'Total: {self.budget:.2f}'
+        return display
+        
+
+    #check_funds method
+    def check_funds(self,amount):
+        return self.get_balance() >= amount
+
+    #deposit method
+    def deposit(self,amount,description=""):
+        self.budget += amount
+        _ = {
+            "amount":amount,
+            "description":description
+        }
+        self.ledger.append(_)
+
+    #withdraw method
+    def withdraw(self,amount,description=""):
+        #checking if we have enough funds for withdraw
+        if self.check_funds(amount):
+            self.budget -= amount
+            _ = {
+                "amount": -amount,
+                "description":description
+            }
+            self.ledger.append(_)
+            #the withdraw done , now return true
+            return True
+
+        return False
+
+    #get_balance method
+    def get_balance(self):
+        return self.budget #no sweat
+
+    #transfer method
+    def transfer(self,amount,category):
+        #check first if we have enough funds
+        if self.check_funds(amount):
+            #ok let's go for the transfer
+            self.withdraw(amount,f'Transfer to {category.name}')
+            category.deposit(amount,f'Transfer from {self.name}')
+            return True
+        return False
+
+#display the chart
+def create_spend_chart(categories):
+    #first we need categories name
+    categories_name = [categorie.name for categorie in categories]
+    #now we need total withdraws for each categorie
+    categories_withdraw=[]
+    for categorie in categories:
+        total_withdraws = 0
+        for operation in categorie.ledger:
+            total_withdraws += operation["amount"] if operation["amount"]<0 else 0
+        #now add the total_withdraws in our list
+        categories_withdraw.append(abs(total_withdraws)) #positive value of course
+
+    #now get the percentage
+    total_withdraws = sum(categories_withdraw)
+    categories_withdraw=[math.floor( ((withdraw/total_withdraws)*100) / 10) * 10 for withdraw in categories_withdraw]
+
+    #lets build the char
+    chart=""
+    chart += "Percentage spent by category\n"
+    #we will create a list which only containts space
+    list_space=[" " for i in range(0,3 * len(categories) - 1) ]
+    #we will use arithmetic progression for calculate the position in our list space
+    '''
+    for the element 0 we will need
+    0*3+1=1 one space
+    for the element 1 we will need
+    1*3+1=4 spaces
+    for the element 2 we will need
+    2*3+1=7 spaces
+    and so far
+    '''
+    for percentage in range(100,-1,-10):
+        chart += " "*(3-len(str(percentage)))+f'{percentage}|'
+        for position in range(0,len(categories_withdraw)):
+            if categories_withdraw[position] == percentage :
+                position=position*3+1
+                list_space[position]="o"
+        #now we can add it to our chart 
+        chart += "".join(list_space)+" "*2+"\n"
+        
+    #now add the - line we will use list_space but need two more cases
+    list_space.append('-')
+    list_space.append('-')
+    #now replace all charachters by - ad just add it
+    list_space=["-" for _ in list_space]
+    chart+=" "*4+"".join(list_space)+"\n"
+    #retake space
+    #now print the name's categorie
+    max_len = max( [len(name) for name in categories_name] )
+    for i in range(0,max_len):
+        chart += " "*5
+        for j in range(0,len(categories_name)):
+            if i==max_len-1 and j==len(categories_name)-1:
+                chart += categories_name[j][i] if len(categories_name[j])>i else " "
+                chart += "  "
+                return chart
+            elif j==len(categories_name)-1:
+                chart += categories_name[j][i] if len(categories_name[j])>i else " "
+                chart += "  \n"
+            else:
+                chart += categories_name[j][i] if len(categories_name[j])>i else " "
+                chart +=" "*2
