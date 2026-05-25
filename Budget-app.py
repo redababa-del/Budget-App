@@ -47,44 +47,50 @@ class Category:
         return False
 
 def create_spend_chart(categories):
-    categories_name = [categorie.name for categorie in categories]
-    categories_withdraw=[]
-    for categorie in categories:
-        total_withdraws = 0
-        for operation in categorie.ledger:
-            total_withdraws += operation["amount"] if operation["amount"]<0 else 0
-        categories_withdraw.append(abs(total_withdraws))
-
-    total_withdraws = sum(categories_withdraw)
-    categories_withdraw=[math.floor( ((withdraw/total_withdraws)*100) / 10) * 10 for withdraw in categories_withdraw]
-
-    chart=""
-    chart += "Percentage spent by category\n"
-    list_space=[" " for i in range(0,3 * len(categories) - 1) ]
-
-    for percentage in range(100,-1,-10):
-        chart += " "*(3-len(str(percentage)))+f'{percentage}|'
-        for position in range(0,len(categories_withdraw)):
-            if categories_withdraw[position] == percentage :
-                position=position*3+1
-                list_space[position]="o"
-        chart += "".join(list_space)+" "*2+"\n"
+    category_names = []
+    category_withdraws = []
+    for category in categories:
+        name = category.name
+        total = 0
+        for operation in category.ledger:
+            if operation["amount"] < 0:
+                total += abs(operation["amount"])
+        category_names.append(name)
+        category_withdraws.append(total)
+    grand_total = sum(category_withdraws)
+    percentages = []
+    for withdraws in category_withdraws:
+        percent = (withdraws / grand_total) * 100
+        rounded = int(percent / 10) * 10
+        percentages.append(rounded)
+    
+    chart = "Percentage spent by category\n"
+    
+    for level in range(100, -1, -10):
+        if level == 100:
+            chart += "100|"
+        elif level >= 10:
+            chart += " " + str(level) + "|"
+        else:
+            chart += "  " + str(level) + "|"
         
-    list_space.append('-')
-    list_space.append('-')
-    list_space=["-" for _ in list_space]
-    chart+=" "*4+"".join(list_space)+"\n"
-    max_len = max( [len(name) for name in categories_name] )
-    for i in range(0,max_len):
-        chart += " "*5
-        for j in range(0,len(categories_name)):
-            if i==max_len-1 and j==len(categories_name)-1:
-                chart += categories_name[j][i] if len(categories_name[j])>i else " "
-                chart += "  "
-                return chart
-            elif j==len(categories_name)-1:
-                chart += categories_name[j][i] if len(categories_name[j])>i else " "
-                chart += "  \n"
+        for i in range(len(percentages)):
+            if percentages[i] >= level:
+                chart += " o "
             else:
-                chart += categories_name[j][i] if len(categories_name[j])>i else " "
-                chart +=" "*2
+                chart += "   "
+        chart += " \n"
+    
+    dashes = "    -"
+    for i in range(len(categories)):
+        dashes += "---"
+    chart += dashes + "\n"
+    
+    chart += "     "
+    for j in range(len(category_names)):
+        chart += category_names[j][0]
+        if j < len(category_names) - 1:
+            chart += "  "
+    chart += "  "
+    
+    return chart
