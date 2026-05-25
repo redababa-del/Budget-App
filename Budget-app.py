@@ -53,7 +53,7 @@ def create_spend_chart(categories):
         total_withdraws = 0
         for operation in categorie.ledger:
             total_withdraws += operation["amount"] if operation["amount"]<0 else 0
-        categories_withdraw.append(abs(total_withdraws)) #positive value of course
+        categories_withdraw.append(abs(total_withdraws))
 
     total_withdraws = sum(categories_withdraw)
     categories_withdraw=[math.floor( ((withdraw/total_withdraws)*100) / 10) * 10 for withdraw in categories_withdraw]
